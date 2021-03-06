@@ -1,12 +1,31 @@
 package com.example.androiddevchallenge.ui.views
 
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.Button
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
+import androidx.compose.material.Text
+import androidx.compose.material.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -28,18 +47,20 @@ import com.example.androiddevchallenge.model.CountDown
 import com.example.androiddevchallenge.ui.TimerState
 import com.example.androiddevchallenge.ui.TimerViewModel
 import com.example.androiddevchallenge.ui.theme.purple200
-import com.example.androiddevchallenge.ui.views.MutableClockSegment.*
+import com.example.androiddevchallenge.utils.rotateToTop
 import com.example.androiddevchallenge.utils.theta
 import com.example.androiddevchallenge.utils.toTwoDigits
-import com.example.androiddevchallenge.utils.rotateToTop
-import kotlin.math.*
+import kotlin.math.PI
+import kotlin.math.ceil
+import kotlin.math.cos
+import kotlin.math.sin
 
 @ExperimentalAnimationApi
 @Composable
 fun TimerApp(timerViewModel: TimerViewModel = viewModel()) {
     val timerState: TimerState by timerViewModel.timerState.observeAsState(TimerState.FINISHED)
     val countDown: CountDown by timerViewModel.countDown.observeAsState(CountDown())
-    var activeSegment by remember { mutableStateOf(NONE) }
+    var activeSegment by remember { mutableStateOf(MutableClockSegment.NONE) }
     Surface(
         color = MaterialTheme.colors.background
     ) {
@@ -54,7 +75,8 @@ fun TimerApp(timerViewModel: TimerViewModel = viewModel()) {
                 enabled = timerState == TimerState.FINISHED,
                 activeSegment = activeSegment,
                 updateActiveSegment = { newSegment ->
-                    activeSegment = if (activeSegment != newSegment) newSegment else NONE
+                    activeSegment =
+                        if (activeSegment != newSegment) newSegment else MutableClockSegment.NONE
                 }
             )
             Spacer(modifier = Modifier.padding(bottom = 12.dp))
@@ -62,7 +84,7 @@ fun TimerApp(timerViewModel: TimerViewModel = viewModel()) {
                 timerState,
                 onStopClick = { timerViewModel.stopTimer() },
                 onStartPauseClick = {
-                    activeSegment = NONE
+                    activeSegment = MutableClockSegment.NONE
                     timerViewModel.onStartStopClick()
                 },
                 startButtonEnabled = countDown.isNotZero,
@@ -95,25 +117,25 @@ fun MutableClock(
             ClockSegment(
                 label = "h",
                 time = countDown.hours.toTwoDigits(),
-                active = activeSegment == HOURS,
-                onSegmentClick = { if (enabled) updateActiveSegment(HOURS) }
+                active = activeSegment == MutableClockSegment.HOURS,
+                onSegmentClick = { if (enabled) updateActiveSegment(MutableClockSegment.HOURS) }
             )
             Spacer(modifier = Modifier.width(16.dp))
             ClockSegment(
                 label = "m",
                 time = countDown.minutes.toTwoDigits(),
-                active = activeSegment == MINUTES,
-                onSegmentClick = { if (enabled) updateActiveSegment(MINUTES) }
+                active = activeSegment == MutableClockSegment.MINUTES,
+                onSegmentClick = { if (enabled) updateActiveSegment(MutableClockSegment.MINUTES) }
             )
             Spacer(modifier = Modifier.width(16.dp))
             ClockSegment(
                 label = "s",
                 time = countDown.seconds.toTwoDigits(),
-                active = activeSegment == SECONDS,
-                onSegmentClick = { if (enabled) updateActiveSegment(SECONDS) }
+                active = activeSegment == MutableClockSegment.SECONDS,
+                onSegmentClick = { if (enabled) updateActiveSegment(MutableClockSegment.SECONDS) }
             )
         }
-        AnimatedVisibility(visible = activeSegment == HOURS) {
+        AnimatedVisibility(visible = activeSegment == MutableClockSegment.HOURS) {
             Wheel(
                 numberOfTicks = 24,
                 activeTicks = countDown.hours,
@@ -121,7 +143,7 @@ fun MutableClock(
                 modifier = Modifier.width(300.dp)
             )
         }
-        AnimatedVisibility(visible = activeSegment == MINUTES) {
+        AnimatedVisibility(visible = activeSegment == MutableClockSegment.MINUTES) {
             Wheel(
                 numberOfTicks = 60,
                 activeTicks = countDown.minutes,
@@ -129,7 +151,7 @@ fun MutableClock(
                 modifier = Modifier.width(300.dp)
             )
         }
-        AnimatedVisibility(visible = activeSegment == SECONDS) {
+        AnimatedVisibility(visible = activeSegment == MutableClockSegment.SECONDS) {
             Wheel(
                 numberOfTicks = 60,
                 activeTicks = countDown.seconds,
@@ -243,7 +265,6 @@ fun WheelSegment(
     )
 }
 
-
 @ExperimentalAnimationApi
 @Composable
 fun ButtonRow(
@@ -282,4 +303,3 @@ fun ResetButton(onButtonClick: () -> Unit) {
         Text("RESET")
     }
 }
-
